@@ -1,13 +1,17 @@
 package org.jwave.model.editor;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.sound.sampled.AudioFormat;
 
 import org.jwave.controller.player.FileSystemHandler;
 
 import ddf.minim.AudioSample;
 import ddf.minim.Minim;
+import ddf.minim.analysis.FFT;
 
 public class EditorImpl implements Editor {
 	private final ArrayList<Cut> editCuts;
@@ -250,8 +254,93 @@ public class EditorImpl implements Editor {
 
 	@Override
 	public boolean cutSelection() {
-		// TODO Auto-generated method stub
-		return false;
+		if (isSomethingSelected()) {
+			int i;
+			int selectionLength = getSelectionTo() - getSelectionFrom();
+			
+			int firstCutToDivideIndex = 0;
+			Cut firstCutToDivide = null;
+			
+			for (i = 0; i < editCuts.size(); i++) {
+				if (editCuts.get(i).getCutFrom() <= getSelectionFrom() && editCuts.get(i).getCutTo() >= getSelectionFrom()) {
+					firstCutToDivideIndex = i;
+					firstCutToDivide = editCuts.get(firstCutToDivideIndex);
+				}
+			}
+			
+			int newFirstCutLength = getSelectionFrom() - firstCutToDivide.getCutFrom();
+			ArrayList<Pair<Integer, Integer>> leftSegments = new ArrayList<>();
+			
+			i = 0;
+			int segmentCounter = 0;
+			while (segmentCounter + (firstCutToDivide.getSegments().get(i).getY() - firstCutToDivide.getSegments().get(i).getX()) < newFirstCutLength) {
+				leftSegments.add(new Pair<>(firstCutToDivide.getSegments().get(i).getX(), firstCutToDivide.getSegments().get(i).getY()));				
+				segmentCounter += (firstCutToDivide.getSegments().get(i).getY() - firstCutToDivide.getSegments().get(i).getX());
+				i++;
+			}
+			
+			leftSegments.add(new Pair<>(firstCutToDivide.getSegments().get(i).getX(), firstCutToDivide.getSegments().get(i).getX() + (newFirstCutLength - segmentCounter)));			
+			
+			int secondCutToDivideIndex = 0;
+			Cut secondCutToDivide = null;
+			
+			for (i = 0; i < editCuts.size(); i++) {
+				if (editCuts.get(i).getCutFrom() <= getSelectionTo() && editCuts.get(i).getCutTo() >= getSelectionTo()) {
+					secondCutToDivideIndex = i;
+					secondCutToDivide = editCuts.get(secondCutToDivideIndex);
+				}
+			}
+			
+			int newSecondCutLength = getSelectionTo() - secondCutToDivide.getCutFrom(); // length of part being cut away
+			ArrayList<Pair<Integer, Integer>> rightSegments = new ArrayList<>();
+			
+			i = 0;
+			segmentCounter = 0;
+			
+			System.out.println(newSecondCutLength);
+			System.out.println(segmentCounter + (secondCutToDivide.getSegments().get(i).getY() - secondCutToDivide.getSegments().get(i).getX()));
+			
+			while (segmentCounter + (secondCutToDivide.getSegments().get(i).getY() - secondCutToDivide.getSegments().get(i).getX()) < newSecondCutLength) {				
+				segmentCounter += (secondCutToDivide.getSegments().get(i).getY() - secondCutToDivide.getSegments().get(i).getX());
+				i++;
+			}
+			
+			rightSegments.add(new Pair<>(secondCutToDivide.getSegments().get(i).getX() + (newSecondCutLength - segmentCounter), secondCutToDivide.getSegments().get(i).getY()));
+			
+			for (i++; i < secondCutToDivide.getSegments().size(); i++) {
+				rightSegments.add(new Pair<>(secondCutToDivide.getSegments().get(i).getX(), secondCutToDivide.getSegments().get(i).getY()));
+			}
+			
+			for (i = secondCutToDivideIndex - 1; i > firstCutToDivideIndex; i--) {
+				// remove all and any cuts between the two cuts
+				editCuts.remove(i);
+			}
+			
+			// set new cuts only after building the new ones
+			if (firstCutToDivideIndex == secondCutToDivideIndex) {
+				editCuts.add(new Cut(new Integer(0), new Integer(0), new ArrayList<Pair<Integer, Integer>>())); // filler cut, to increase size
+			
+				// shift actual cuts down to account that single cut will become two cuts
+				for (i = editCuts.size() - 1; i > firstCutToDivideIndex + 1; i--) {
+					editCuts.set(i, editCuts.get(i - 1));					
+				}
+			}
+				
+			int secondCutFrom = firstCutToDivideIndex != secondCutToDivideIndex ? secondCutToDivide.getCutFrom() - (selectionLength - (getSelectionTo() - secondCutToDivide.getCutFrom())) : firstCutToDivide.getCutFrom() + newFirstCutLength;
+			
+			editCuts.set(firstCutToDivideIndex + 1, new Cut(secondCutFrom, secondCutToDivide.getCutTo() - selectionLength, rightSegments));
+			editCuts.set(firstCutToDivideIndex, new Cut(firstCutToDivide.getCutFrom(), firstCutToDivide.getCutFrom() + newFirstCutLength, leftSegments));
+			
+			// shift cut from's and to's down to account for the gap
+			for (i = firstCutToDivideIndex + 2; i < editCuts.size(); i++) {
+				editCuts.get(i).setCutFrom(editCuts.get(i).getCutFrom() - selectionLength);
+				editCuts.get(i).setCutTo(editCuts.get(i).getCutTo() - selectionLength);
+			}
+			
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	@Override
@@ -280,8 +369,86 @@ public class EditorImpl implements Editor {
 	}
 
 	@Override
-	public List<Integer> getWaveform(int from, int to) {
-		// TODO Auto-generated method stub
-		return null;
+	// Code based on example taken from minim repository (Minim/examples/Analysis/offlineAnalysis/offlineAnalysis.pde)
+	public List<Float> getWaveform(int from, int to) {
+		List<Float> waveformValues = new ArrayList<Float>();
+		ArrayList<FloatBuffer> buffers;
+		float[][] spectra;
+		FloatBuffer left;
+		FloatBuffer right;
+		float lengthOfChunks;		
+		
+		if (songLoaded) {
+			AudioFormat format = song.getFormat();
+			
+			buffers = new ArrayList<FloatBuffer>(20);
+			left = FloatBuffer.allocate(bufferSize * 10);
+			if (format.getChannels() == Minim.STEREO) {
+			  right = FloatBuffer.allocate(bufferSize * 10);
+			} else {
+			  right = null;
+			}		
+			
+			float[] rightChannel = song.getChannel(AudioSample.RIGHT);
+			float[] leftChannel = song.getChannel(AudioSample.LEFT);
+			
+			int fftSize = 1024;
+			float[] fftSamplesLeft = new float[fftSize];
+			float[] fftSamplesRight = new float[fftSize];
+			  
+			FFT fft = new FFT(fftSize, song.sampleRate());
+			  
+			int totalChunks = (leftChannel.length / fftSize) + 1;
+			  
+			lengthOfChunks = (float) lengthOfSong / (float) totalChunks;
+			
+			spectra = new float[totalChunks][fftSize / 2];
+			
+			for (int chunkIdx = 0; chunkIdx < totalChunks; ++chunkIdx) {
+				int chunkStartIndex = chunkIdx * fftSize;
+				int chunkSize = Math.min(leftChannel.length - chunkStartIndex, fftSize);
+				
+				System.arraycopy(leftChannel, chunkStartIndex, fftSamplesLeft, 0, chunkSize);
+				System.arraycopy(rightChannel, chunkStartIndex, fftSamplesRight, 0, chunkSize);
+				
+				if (chunkSize < fftSize) {
+					for (int i = chunkSize; i < fftSamplesLeft.length - 1; i++) {
+						fftSamplesLeft[i] = (float) 0.0;
+					}
+					
+					for (int i = chunkSize; i < fftSamplesRight.length - 1; i++) {
+						fftSamplesRight[i] = (float) 0.0;
+					}
+				}
+				
+				fft.forward(fftSamplesLeft);
+				fft.forward(fftSamplesRight);
+				
+				for (int i = 0; i < 512; ++i) {				
+					spectra[chunkIdx][i] = fft.getBand(i);
+				}
+				
+				float total = 0;			
+				for (int i = 0; i < spectra[chunkIdx].length - 1; ++i) {		
+					total += spectra[chunkIdx][i];
+				}
+				
+				waveformValues.add(total);
+			}					
+		}
+		
+		return waveformValues;
+	}
+	
+	public void printWaveform() {
+		if (songLoaded) {
+			List<Float> results = getWaveform(0, getSongLength());
+			
+			System.out.println(results.size());
+			
+			for (int i = 0; i < results.size(); i++) {
+				System.out.println(i + ", " + results.get(i));
+			}
+		}		
 	}
 }
