@@ -3,13 +3,27 @@ package org.jwave.controller;
 import org.jwave.view.FXGUI;
 import org.jwave.view.UI;
 
+/**
+ * Core of the controller
+ * handles the behavior of the application.
+ * 
+ * TODO
+ * can this class have more instances? (singleton?)
+ * 
+ * @author Alessandro Martignano
+ */
 public class JWaveApp {
 
+    /**
+     * The user interface
+     */
     private final UI ui;
-    //private final Model playerModel;
     
-    public JWaveApp(){
-        this.ui = new FXGUI();
+    /**
+     * Initialize the UI and launches it.
+     */
+    public JWaveApp() {
+        this.ui = FXGUI.getFXGUI();
         this.ui.launcher(new String[] {});
     }
 }

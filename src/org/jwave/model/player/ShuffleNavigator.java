@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * This is an implementation of PlaylistSurfer.
+ * This is an implementation of PlaylistSurfer that follows the shuffle {@link}PlayMode policy.
  *
  */
 public final class ShuffleNavigator extends PlaylistNavigatorImpl {
@@ -14,12 +14,16 @@ public final class ShuffleNavigator extends PlaylistNavigatorImpl {
     private List<Integer> shuffledList;
     
     /**
-     * Creates a new instance of the class.
+     * Creates a new instance of ShuffleNavigator.
      * 
      * @param playlistDimension
+     *          the initial playlist dimension.
+     *          
+     * @param currentIndex
+     *          the index the navigator has to start with.          
      */
-    public ShuffleNavigator(final int playlistDimension) {
-        super(playlistDimension);
+    public ShuffleNavigator(final int playlistDimension, final int currentIndex) {
+        super(playlistDimension, currentIndex);
         this.seed = new Random();
         this.shuffledList = new ArrayList<>();
     }

@@ -1,12 +1,14 @@
 package org.jwave.controller.player;
 
+import java.util.Optional;
+
 import org.jwave.model.player.PlayMode;
 import org.jwave.model.player.Song;
 
 /**
  * This interface represents a dynamic player.
  */
-public interface DynamicPlayer {
+public interface DynamicPlayer extends ESource<Optional<PlayMode>, Optional<Song>> {
 
     /**
      * Starts reproducing audio.
@@ -30,6 +32,7 @@ public interface DynamicPlayer {
      *          the point of the file where the cursor has to be moved.
      *          
      * @throws IllegalArgumentException
+     *          when passing an index outside length borders.
      *                   
      */
     void cue(int millis) throws IllegalArgumentException;

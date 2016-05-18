@@ -2,42 +2,38 @@ package org.jwave.model.player;
 
 import java.io.File;
 import java.io.Serializable;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-public class SongImpl extends File implements Song, Serializable {
-
+/**
+ * An implementation of Song that can be serialized.
+ *
+ */
+public class SongImpl implements Song, Serializable {
+    
     /**
      * 
      */
-    private static final long serialVersionUID = 3265120631427974789L;
-    //check if it is better to use the class Path for playlist portability in various OS;
-//    private String absolutePath;
-//    private String name;
-    
+    private static final long serialVersionUID = 9045721077357297256L;
+    private File decorated;
     private MetaData metaData;
     
     /**
      * Creates a new song object.
      * 
-     * @param absoluteName
-     *          the path in the fileSystem
+     * @param audioFile
+     *          the audio file that will become a song.
      */
-    public SongImpl(final String absoluteName) {
-        super(Paths.get(absoluteName).toString());
-//        this.absolutePath = absoluteName;
-//        this.name = absoluteName.substring(absoluteName.lastIndexOf(System.getProperty("file.separator")));
-        this.metaData = new MetaDataImpl(this.getAbsolutePath());
+    public SongImpl(final File audioFile) {
+        this.decorated = audioFile;     
+        this.metaData = new MetaDataImpl(this.decorated.getAbsolutePath());
     }
     
     @Override
     public String getName() {
-        return super.getName();
+        return this.decorated.getName();
     }
 
     @Override
     public String getAbsolutePath() {
-        return super.getAbsolutePath();
+        return this.decorated.getAbsolutePath();
     }
 
     @Override

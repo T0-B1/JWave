@@ -14,7 +14,7 @@ import ddf.minim.Minim;
 import org.jwave.controller.player.FileSystemHandler;
 
 /**
- * This class contains metadata of a file.
+ * This class is an implementation of {@link}MetaData.
  *
  */
 public class MetaDataImpl implements MetaData, Serializable {
@@ -33,17 +33,15 @@ public class MetaDataImpl implements MetaData, Serializable {
     private transient AudioPlayer metaDataLoader;
     
     private Map<MData, String> data;
-   
-//    private Optional<String> album;
-//    private Optional<String> author;
-//    private Optional<String> comment;
-//    private Optional<String> composer;
-//    private Optional<String> copyright;
-//    private Optional<String> date;
-//    private Optional<String> disc;
-//    private Optional<String> encoded;
     
-    //to be checked if deleting AudioPlayer after loading metadata is possible then enumType ecc.. is useless.
+    //TODO check if deleting AudioPlayer after loading metadata is possible then enumType ecc.. is useless.
+    
+    /**
+     * Creates a new MetaDataImpl.
+     * 
+     * @param absoluteFilePath
+     *          the path of the file containing metadata.
+     */
     public MetaDataImpl(final String absoluteFilePath) {
         this.minim = new Minim(FileSystemHandler.getFileSystemHandler());
         this.metaDataLoader = this.minim.loadFile(absoluteFilePath);
@@ -153,5 +151,4 @@ public class MetaDataImpl implements MetaData, Serializable {
     private String retrieve(final MData key) {
         return this.data.get(key);
     }
-
 }

@@ -1,60 +1,68 @@
 package org.jwave.view;
 
-import java.net.URL;
-import java.util.ResourceBundle;
+import org.jwave.view.screens.FXMLScreens;
 
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import javafx.fxml.FXML;
 
-public class FXGUI extends Application implements UI, Initializable{   
+/**
+ * A GUI based on JavaFX.
+ * 
+ * @author Alessandro Martignano
+ *
+ */
+public final class FXGUI extends Application implements UI { 
+    
+    private static final FXGUI SINGLETON = new FXGUI();
+    
+    private Stage stage;
+    
+    public FXGUI() { }
 
-    @FXML
-    Button btnPlay;
-
+    /* (non-Javadoc)
+     * @see javafx.application.Application#start(javafx.stage.Stage)
+     */
     @Override
-    public void start(Stage primaryStage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("Player.fxml"));
-        primaryStage.setTitle("J-Wave");
-        primaryStage.setScene(new Scene(root));
-        //primaryStage.setResizable(false);
+    public void start(final Stage primaryStage) throws Exception {
+        
+        System.out.println(primaryStage);
+        this.stage = primaryStage;
+
+        Pane mainPane = new StackPane();
+        
+        primaryStage.setTitle("J-Wave"); 
+        primaryStage.setScene(new Scene(mainPane));
+        
+        ScreenSwitcher.setMainContainer(new ScreenContainer(mainPane));
+        ScreenSwitcher.loadScreen(FXMLScreens.PLAYER);
+
         primaryStage.show();
     }
     
+    /* (non-Javadoc)
+     * @see org.jwave.view.UI#launcher(java.lang.String[])
+     */
     @Override
-    public void launcher(String[] args) {
+    public void launcher(final String[] args) {
         launch(args);
-    }   
+    }
     
-    @Override // This method is called by the FXMLLoader when initialization is complete
-    public void initialize(URL location, ResourceBundle resources) {
-        assert btnPlay != null : "fx:id=\"btnPlay\" was not injected: check your FXML file 'Player.fxml'.";
+    /**
+     * 
+     * @return the instance of the SINGLETON
+     */
+    public static FXGUI getFXGUI() {
+        return SINGLETON;
     }
 
-    @FXML
-    private void play(){
-        System.out.println("play");
-    }
-    
-    @FXML
-    private void stopPlay(){
-        System.out.println("stop");
-    }
-    
-    @FXML
-    private void next(){
-        System.out.println("next");
-    }
-    
-    @FXML
-    private void prev(){
-        System.out.println("prev");
-    }
-
+    /**
+     * @return the primaryStage
+     */
+    public Stage getPrimaryStage() {
+        return stage;
+    }  
     
 }

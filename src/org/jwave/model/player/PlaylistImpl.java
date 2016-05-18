@@ -1,10 +1,18 @@
 package org.jwave.model.player;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import org.jwave.controller.player.EObserver;
+
+/**
+ * This is an implementation of {@link}Playlist that can be serialized.
+ *
+ */
 public class PlaylistImpl implements Playlist, Serializable {
     
     /**
@@ -13,17 +21,29 @@ public class PlaylistImpl implements Playlist, Serializable {
     private static final long serialVersionUID = 4440054649095302226L;
     //to be checked if it is possible to avoid song duplication with a different implementation
 //    private Set<Song> s = new HashSet<>();
+    private Set<EObserver<? super Optional<Integer>, ? super Optional<Integer>>> set;
+    
     private List<Song> list;
+    private String playlistName;
     private transient Optional<Song> currentSelected;
     
-    public PlaylistImpl() {
+    /**
+     * Creates a new empty playlist.
+     * 
+     * @param name
+     *          the name of the playlist.
+     */
+    public PlaylistImpl(final String name) {
+        this.playlistName = name;
         this.list = new LinkedList<>();
         this.currentSelected = Optional.empty();
+        this.set = new HashSet<>();
     }
     
     @Override
     public void addSong(final Song newSong) {
         this.list.add(newSong);
+        this.notifyEObservers(Optional.of(this.getDimension()));
     }
 
     @Override
@@ -44,6 +64,7 @@ public class PlaylistImpl implements Playlist, Serializable {
         for (Song s : songNames) {
             this.list.remove(s);
         }
+        this.notifyEObservers(Optional.of(this.getDimension()));
     }
 
     @Override
@@ -52,7 +73,10 @@ public class PlaylistImpl implements Playlist, Serializable {
     }
 
     @Override
-    public Song selectSong(final String name) throws IllegalArgumentException  {
+    public synchronized Song selectSong(final String name) throws IllegalArgumentException  {
+        if (!this.list.contains(name)) {
+            throw new IllegalArgumentException("Song not found");
+        }
         final Song out = this.list.stream()
                                 .filter(s -> s.getName().equals(name))
                                 .findFirst().get();
@@ -62,6 +86,9 @@ public class PlaylistImpl implements Playlist, Serializable {
 
     @Override
     public synchronized Song selectSong(final int index) throws IllegalArgumentException {
+        if (index > (this.getDimension() - 1)) {
+            throw new IllegalArgumentException("Out of playlist borders.");
+        }
         final Song out = this.list.get(index);
         this.setCurrentSong(out);
         return out;        
@@ -86,5 +113,37 @@ public class PlaylistImpl implements Playlist, Serializable {
     
     private void setCurrentSong(final Song newCurrentSong) {
         this.currentSelected = Optional.of(newCurrentSong);
+    }
+
+    @Override
+    public void addEObserver(final EObserver<? super Optional<Integer>, ? super Optional<Integer>> obs) {
+        this.set.add(obs);
+    }
+
+    @Override
+    public void notifyEObservers(final Optional<Integer> arg1, final Optional<Integer> arg2) {
+        this.set.forEach(obs -> obs.update(this, arg1, arg2));
+    }
+
+    @Override
+    public int indexOf(final Song song) {
+       return this.list.indexOf(song);
+    }
+
+    @Override
+    public void notifyEObservers(final Optional<Integer> arg) {
+        this.set.forEach(obs -> obs.update(this, arg));
+    }
+
+    @Override
+    public String getName() {
+        return this.playlistName;
+    }
+
+    @Override
+    public void clearObservers() {
+        if (!this.set.isEmpty()) {
+            this.set = new HashSet<>();
+        }   
     }
 }

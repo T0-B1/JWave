@@ -1,8 +1,17 @@
 package org.jwave.controller;
 
-public class Main {
+/**
+ * Starting point of the application.
+ * @author Alessandro Martignano
+ */
+public final class Main {
     
-    public static void main(String[] args) {
+    private Main() { }
+    
+    /**
+     * @param args args
+     */
+    public static void main(final String[] args) {
         new JWaveApp();
     }
 }

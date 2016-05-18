@@ -1,5 +1,9 @@
 package org.jwave.controller.player;
 
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
 import org.jwave.model.player.PlayMode;
 import org.jwave.model.player.Song;
 
@@ -11,10 +15,14 @@ import ddf.minim.ugens.FilePlayer;
 /**
  * This class is an implementation of {@link}DynamicPlayer.
  */
-public class DynamicPlayerImpl implements DynamicPlayer {
+final class DynamicPlayerImpl implements DynamicPlayer {
 
     private static final int BUFFER_SIZE = 1024;
     private static final int OUT_BIT_RATE = 16;
+
+    private static final DynamicPlayer SINGLETON = new DynamicPlayerImpl();
+    
+    private Set<EObserver<? super Optional<PlayMode>, ? super Optional<Song>>> set;
     
     private Minim minim; 
     private FilePlayer player;
@@ -27,12 +35,13 @@ public class DynamicPlayerImpl implements DynamicPlayer {
     /**
      * Creates a new DynamicPlayerImpl.
      */
-    public DynamicPlayerImpl() { 
+    private DynamicPlayerImpl() { 
         this.minim = new Minim(FileSystemHandler.getFileSystemHandler());
         this.currentPlayMode = PlayMode.NO_LOOP;
         this.started = false;
         this.paused = false;
         this.agent = new ClockAgent("Playback");
+        this.set = new HashSet<>();
     }
     
     
@@ -49,13 +58,13 @@ public class DynamicPlayerImpl implements DynamicPlayer {
 
     @Override
     public void pause() {
-        this.player.pause();
         this.setPaused(true);
+        this.player.pause();
     }
 
     @Override
     public void stop() {
-        this.player.pause();
+        this.pause();
         this.player.rewind();
     }
 
@@ -83,16 +92,25 @@ public class DynamicPlayerImpl implements DynamicPlayer {
     public PlayMode getPlayMode() {
         return this.currentPlayMode;
     }
+    
+    /**
+     * 
+     * @return
+     *          the SINGLETON instance of DynamicPlayerImpl.
+     */
+    public static DynamicPlayer getDynamicPlayer() {
+        return SINGLETON;
+    }
 
     @Override
     public void setVolume(final int amount) {
         // TODO Auto-generated method stub
-        
     }
 
     @Override
     public void setPlayMode(final PlayMode playMode) {
         this.currentPlayMode = playMode;
+        this.notifyEObservers(Optional.of(playMode), Optional.empty());
     }
 
     @Override
@@ -103,12 +121,13 @@ public class DynamicPlayerImpl implements DynamicPlayer {
             this.out.close();
         }
         this.started = false;
-        this.player = new FilePlayer(this.minim.loadFileStream(song.getAbsolutePath(), BUFFER_SIZE, true));
+        this.player = new FilePlayer(this.minim.loadFileStream(song.getAbsolutePath(), BUFFER_SIZE, false));
         this.stop();
         
         this.out = this.minim.getLineOut(Minim.STEREO, BUFFER_SIZE, sampleRateRetriever.sampleRate(), OUT_BIT_RATE);
         this.player.patch(this.out);
         sampleRateRetriever.close();
+        this.notifyEObservers(Optional.empty(), Optional.of(song));
     }
     
     private void setPaused(final boolean value) {
@@ -128,14 +147,6 @@ public class DynamicPlayerImpl implements DynamicPlayer {
     }
     
     private void checkInReproduction() {
-        try {
-//            System.out.println(this.isPlaying());
-            System.out.println("Player present: " + this.isPlayerPresent() + 
-                    "isPlaying: " + this.isPlaying() + "Started: " + this.hasStarted() + 
-                    "paused:" + this.isPaused());
-        } catch (NullPointerException ex) {
-            System.out.println("null catched in checkInReproduction");
-        }
         if (this.isPlayerPresent() && !this.isPlaying() && this.hasStarted() && !this.isPaused()) {
             this.setPlayer(AudioSystem.getAudioSystem().getPlaylistManager().getPlayingQueue()
                     .selectSong(AudioSystem.getAudioSystem().getPlaylistManager().getPlaylistNavigator().next()));
@@ -147,13 +158,13 @@ public class DynamicPlayerImpl implements DynamicPlayer {
         return this.player != null;
     }
     
-    private class ClockAgent implements Runnable {
+    private final class ClockAgent implements Runnable {
 
         private Thread t;
         private String name;
-        private boolean stopped;
+        private volatile boolean stopped;
         
-        public ClockAgent(final String threadName) {
+        ClockAgent(final String threadName) {
             this.stopped = false;
             this.name = threadName;
             this.t = new Thread(this, this.name);
@@ -163,7 +174,7 @@ public class DynamicPlayerImpl implements DynamicPlayer {
         @Override
         public void run() {
             System.out.println("Running thread" + this.name);
-            while(!this.isStopped()) {
+            while (!this.isStopped()) {
                 try {
                     DynamicPlayerImpl.this.checkInReproduction();
                     Thread.sleep(10L);
@@ -184,5 +195,30 @@ public class DynamicPlayerImpl implements DynamicPlayer {
         private void setStopped(final boolean value) {
             this.stopped = value;
         }
+    }
+
+    @Override
+    public void addEObserver(final EObserver<? super Optional<PlayMode>, ? super Optional<Song>> obs) {
+        this.set.add(obs);
+    }
+
+
+    @Override
+    public void notifyEObservers(final Optional<PlayMode> arg1, final Optional<Song> arg2) {
+        this.set.forEach(obs -> obs.update(this, arg1, arg2));
+    }
+
+
+    @Override
+    public void notifyEObservers(final Optional<PlayMode> arg) {
+        this.set.forEach(obs -> obs.update(this, arg));
+    }
+
+
+    @Override
+    public void clearObservers() {
+        if (!this.set.isEmpty()) {
+            this.set = new HashSet<>();
+        }    
     }
 }
