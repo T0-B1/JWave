@@ -34,7 +34,7 @@ public class PlaylistImpl implements Playlist, Serializable {
      *          the name of the playlist.
      */
     public PlaylistImpl(final String name) {
-        this.playlistName = name;
+        this.setName(name);
         this.list = new LinkedList<>();
         this.currentSelected = Optional.empty();
         this.set = new HashSet<>();
@@ -145,5 +145,15 @@ public class PlaylistImpl implements Playlist, Serializable {
         if (!this.set.isEmpty()) {
             this.set = new HashSet<>();
         }   
+    }
+
+    @Override
+    public void setName(final String newName) {
+        this.playlistName = newName;
+    }
+
+    @Override
+    public void clear() {
+        this.list = new LinkedList<>();
     }
 }

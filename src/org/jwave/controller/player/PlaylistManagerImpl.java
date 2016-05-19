@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -75,7 +76,7 @@ final class PlaylistManagerImpl implements PlaylistManager {
             throw new IllegalArgumentException("Trying to open a wrong type of file");
         }
         this.defaultQueue.addSong(new SongImpl(audioFile));
-    }   //TODO check if to add a control for NON audio files with the extension ".mp3" or ".wav"
+    }  
 
 //    @Override
 //    public void openDir(final String path, final boolean enqueue) {
@@ -95,15 +96,10 @@ final class PlaylistManagerImpl implements PlaylistManager {
     @Override
     public void reset() {
         if (!this.defaultQueue.isEmpty()) {
-            try {
-                this.defaultQueue = this.createNewPlaylist("default");
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } //TODO check if it is better to add a method in Playlist named "clean" or similar.
+            this.defaultQueue.clear();
         }   
-        this.loadedPlaylist = this.getDefaultQueue();
-        this.loadedPlaylist.addEObserver(this.getPlaylistNavigator());
+        this.loadedPlaylist = this.defaultQueue;
+        this.loadedPlaylist.addEObserver(this.navigator);
     }
 
     @Override
@@ -162,7 +158,7 @@ final class PlaylistManagerImpl implements PlaylistManager {
         }
         final Playlist out = new PlaylistImpl(name);
         this.availablePlaylists.add(out);
-        this.savePlaylistToFile(out, name, System.getProperty(HOME) + System.getProperty(SEPARATOR) + SAVE_DIR_NAME);
+        this.savePlaylistToFile(out, name, this.getDefaultSavePath());
         return out;
     }
 
@@ -182,8 +178,8 @@ final class PlaylistManagerImpl implements PlaylistManager {
             throw new IllegalArgumentException("Cannot delete the default playlist");
         } else {
             this.availablePlaylists.remove(playlist);
-            final Path filePath = Paths.get(System.getProperty(HOME) + System.getProperty(SEPARATOR) + SAVE_DIR_NAME 
-                    + System.getProperty(SEPARATOR) + playlist.getName());
+            final Path filePath = Paths.get(this.getDefaultSavePath() + System.getProperty(SEPARATOR) 
+            + playlist.getName());
            try {
                Files.delete(filePath);
            } catch (NoSuchFileException ex) {
@@ -196,7 +192,7 @@ final class PlaylistManagerImpl implements PlaylistManager {
 
     @Override
     public void refreshAvailablePlaylists() {
-        final Path defaultDir = Paths.get(System.getProperty("user.home") + System.getProperty("file.separator") + SAVE_DIR_NAME);
+        final Path defaultDir = Paths.get(this.getDefaultSavePath());
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(defaultDir)) {
             for (Path file : stream) {
                if (Files.isRegularFile(file)) {
@@ -234,7 +230,15 @@ final class PlaylistManagerImpl implements PlaylistManager {
         if (this.isNameAlreadyPresent(newName)) {
             throw new IllegalArgumentException("Cannot have two playlists with the same name.");
         }
-        //TODO to be completed
+        final String oldName = playlist.getName();
+        playlist.setName(newName);
+        final Path filePath = Paths.get(this.getDefaultSavePath() + System.getProperty(SEPARATOR) + oldName);
+        try {
+            this.savePlaylistToFile(playlist, playlist.getName(), this.getDefaultSavePath());
+            Files.delete(filePath);
+        } catch (IOException e) {            
+            e.printStackTrace();
+        }
     }    
     
     @Override
@@ -300,12 +304,11 @@ final class PlaylistManagerImpl implements PlaylistManager {
     }
     
     private void createSaveDir() {
-        final Path saveDirPath = Paths.get(System.getProperty(HOME) + System.getProperty(SEPARATOR) + SAVE_DIR_NAME);
+        final Path saveDirPath = Paths.get(this.getDefaultSavePath());
         try {
             Files.createDirectory(saveDirPath);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.err.println("Cannot create default save directory.");
         }
     }
     
@@ -336,5 +339,9 @@ final class PlaylistManagerImpl implements PlaylistManager {
                 e.printStackTrace();
             }
         }
+    }
+    
+    private String getDefaultSavePath() {
+        return System.getProperty(HOME) + System.getProperty(SEPARATOR) + SAVE_DIR_NAME;
     }
 }
