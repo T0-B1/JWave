@@ -1,14 +1,11 @@
-package org.jwave.controller.player;
+package org.jwave.model.player;
 
 import java.util.Optional;
-
-import org.jwave.model.player.PlayMode;
-import org.jwave.model.player.Song;
 
 /**
  * This interface represents a dynamic player.
  */
-public interface DynamicPlayer extends ESource<Optional<PlayMode>, Optional<Song>> {
+public interface DynamicPlayer {
 
     /**
      * Starts reproducing audio.
@@ -50,10 +47,19 @@ public interface DynamicPlayer extends ESource<Optional<PlayMode>, Optional<Song
     int getPosition();
 
     /**
+     * 
      * @return
-     *          the current play mode (default is {@link}Playmode.NO_LOOP)
+     *          the song loaded in the dynamic player.
      */
-    PlayMode getPlayMode();
+    Optional<Song> getLoaded();
+   
+    
+    public boolean isPlaying();
+    
+    public boolean isPaused();
+    
+    public boolean hasStarted();
+    
     
     /**
      * Modifies the current volume.
@@ -62,13 +68,6 @@ public interface DynamicPlayer extends ESource<Optional<PlayMode>, Optional<Song
      *          the amount of volume to be set.         
      */
     void setVolume(int amount);
-    
-    /**
-     * 
-     * @param playMode
-     *          the play mode to be set.
-     */
-    void setPlayMode(PlayMode playMode);
     
     /**
      * Sets the player by loading a song.

@@ -1,4 +1,4 @@
-package org.jwave.controller.player;
+package org.jwave.model.player;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -6,17 +6,12 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.jwave.model.player.PlayMode;
-import org.jwave.model.player.Playlist;
-import org.jwave.model.player.PlaylistNavigator;
-import org.jwave.model.player.Song;
-
 /**
  * Interface that models the concept of playlist manager.
  * A playlist manager saves and loads playlists from the file system and contains the strategy
  * for navigate them.
  */
-public interface PlaylistManager extends EObserver<Optional<PlayMode>, Optional<Song>> {
+public interface PlaylistManager {
     
     /**
      * Loads an audio file and adds it to the default playlist.
@@ -27,7 +22,7 @@ public interface PlaylistManager extends EObserver<Optional<PlayMode>, Optional<
      * @throws IllegalArgumentException
      *          when trying to open a non audio file.
      */
-    void openAudioFile(File audioFile) throws IllegalArgumentException;
+    void addAudioFile(File audioFile) throws IllegalArgumentException;
     
     /**
      * Creates a new playlist and adds it to the collection of available playlists.
@@ -49,7 +44,19 @@ public interface PlaylistManager extends EObserver<Optional<PlayMode>, Optional<
      */
     void deletePlaylist(Playlist playlist);
     
+    /**
+     * 
+     * @return
+     *          the next song in the playing queue.
+     */
+    Song next();
     
+    /**
+     * 
+     * @return
+     *          the previous song in the playing queue.
+     */
+    Song prev();
     
     /**
      * Resets the playlist manager so the default playlist will be cleaned and it will become 
@@ -79,11 +86,12 @@ public interface PlaylistManager extends EObserver<Optional<PlayMode>, Optional<
     void renamePlaylist(Playlist playlist, String newName);
     
     /**
-     *
-     * @return
-     *          the current song loaded in the connected {@link}DynamicPlayer.
+     * Sets the available playlists.
+     * 
+     * @param playlists
+     *          the available playlists.
      */
-    Optional<Song> getCurrentLoaded();
+    void setAvailablePlaylists(Collection<? extends Playlist> playlists);
     
     /**
      * 
@@ -114,11 +122,18 @@ public interface PlaylistManager extends EObserver<Optional<PlayMode>, Optional<
     Collection<Playlist> getAvailablePlaylists();
     
     /**
-     * 
      * @return
-     *          the playlistnavigator object.
+     *          the current play mode (default is {@link Playmode.NO_LOOP})
      */
-    PlaylistNavigator getPlaylistNavigator();
+    PlayMode getPlayMode();
+    
+    /**
+     * 
+     * @param newPlayMode
+     *          the play mode to be set.
+     */
+    void setPlayMode(PlayMode newPlayMode);
+    
     
     /**
      * Sets the current playing queue.

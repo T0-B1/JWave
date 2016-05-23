@@ -7,11 +7,11 @@ import java.nio.file.Paths;
 import java.util.Scanner;
 
 import org.jwave.controller.player.AudioSystem;
-import org.jwave.controller.player.DynamicPlayer;
-import org.jwave.controller.player.PlaylistManager;
 import org.jwave.controller.player.PlaylistNotFoundException;
+import org.jwave.model.player.DynamicPlayer;
 import org.jwave.model.player.PlayMode;
 import org.jwave.model.player.Playlist;
+import org.jwave.model.player.PlaylistManager;
 
 /**
  * Class used for testing player functionalities from console. 
@@ -111,7 +111,7 @@ public final class PlayerDebug {
             case 12:
                 System.out.println("Enter song path");
                 Path path = Paths.get(in.next());
-                manager.openAudioFile(path.toFile());
+                manager.addAudioFile(path.toFile());
                 break;
             case 13:
                 System.out.println("Enter name of the playlist you want to delete");
@@ -124,7 +124,7 @@ public final class PlayerDebug {
                 }
             case 14:
                 System.out.println("Refreshing available playlists");
-                manager.refreshAvailablePlaylists();
+                manager.refreshAvailableCache();
                 break;
             case 15:
                 System.out.println("Does nothing");
