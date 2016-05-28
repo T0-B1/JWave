@@ -8,7 +8,7 @@ import org.jwave.model.ESource;
  * A playlist is a collection of {@link}Song.
  *
  */
-public interface Playlist extends ESource<Optional<Integer>, Optional<Integer>> {
+public interface Playlist extends ESource<Integer> {
     
     /**
      * Add a song to the playlist.
@@ -34,10 +34,10 @@ public interface Playlist extends ESource<Optional<Integer>, Optional<Integer>> 
     /**
      * Removes songs from the playlist.
      * 
-     * @param songNames
+     * @param songToBeRemoved
      *          the songs to be removed.
      */
-    void removeFromPlaylist(Song... songNames);
+    void removeFromPlaylist(Song songToBeRemoved);
     
     /**
      * 

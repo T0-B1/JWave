@@ -19,7 +19,8 @@ public class PlaylistImpl implements Playlist, Serializable {
      * 
      */
     private static final long serialVersionUID = 4440054649095302226L;
-    private Set<EObserver<? super Optional<Integer>, ? super Optional<Integer>>> set;
+    
+    private Set<EObserver<? super Integer>> set;
     
     private List<Song> list;
     private String playlistName;
@@ -32,7 +33,7 @@ public class PlaylistImpl implements Playlist, Serializable {
      *          the name of the playlist.
      */
     public PlaylistImpl(final String name) {
-        this.setName(name);
+        this.playlistName = name;
         this.list = new LinkedList<>();
         this.currentSelected = Optional.empty();
         this.set = new HashSet<>();
@@ -41,7 +42,7 @@ public class PlaylistImpl implements Playlist, Serializable {
     @Override
     public void addSong(final Song newSong) {
         this.list.add(newSong);
-        this.notifyEObservers(Optional.of(this.getDimension()));
+        this.notifyEObservers(this.getDimension());
     }
 
     @Override
@@ -58,11 +59,10 @@ public class PlaylistImpl implements Playlist, Serializable {
     }
 
     @Override
-    public void removeFromPlaylist(final Song... songNames) {
-        for (Song s : songNames) {
-            this.list.remove(s);
-        }
-        this.notifyEObservers(Optional.of(this.getDimension()));
+    public void removeFromPlaylist(final Song songToBeRemoved) {
+        this.checkSongPresence(songToBeRemoved);
+        this.list.remove(songToBeRemoved);
+        this.notifyEObservers(this.getDimension());
     }
 
     @Override
@@ -71,10 +71,7 @@ public class PlaylistImpl implements Playlist, Serializable {
     }
 
     @Override
-    public synchronized Song selectSong(final String name) throws IllegalArgumentException  {
-        if (!this.list.contains(name)) {
-            throw new IllegalArgumentException("Song not found");
-        }
+    public Song selectSong(final String name) throws IllegalArgumentException  {
         final Song out = this.list.stream()
                                 .filter(s -> s.getName().equals(name))
                                 .findFirst().get();
@@ -83,8 +80,8 @@ public class PlaylistImpl implements Playlist, Serializable {
     }
 
     @Override
-    public synchronized Song selectSong(final int index) throws IllegalArgumentException {
-        if (index > (this.getDimension() - 1)) {
+    public Song selectSong(final int index) throws IllegalArgumentException {
+        if ((index > (this.list.size() - 1)) || index < 0) {
             throw new IllegalArgumentException("Out of playlist borders.");
         }
         final Song out = this.list.get(index);
@@ -114,22 +111,18 @@ public class PlaylistImpl implements Playlist, Serializable {
     }
 
     @Override
-    public void addEObserver(final EObserver<? super Optional<Integer>, ? super Optional<Integer>> obs) {
+    public void addEObserver(final EObserver<? super Integer> obs) {
         this.set.add(obs);
     }
 
     @Override
-    public void notifyEObservers(final Optional<Integer> arg1, final Optional<Integer> arg2) {
-        this.set.forEach(obs -> obs.update(this, arg1, arg2));
-    }
-
-    @Override
     public int indexOf(final Song song) {
-       return this.list.indexOf(song);
+        this.checkSongPresence(song);
+        return this.list.indexOf(song);
     }
 
     @Override
-    public void notifyEObservers(final Optional<Integer> arg) {
+    public void notifyEObservers(final Integer arg) {
         this.set.forEach(obs -> obs.update(this, arg));
     }
 
@@ -153,5 +146,11 @@ public class PlaylistImpl implements Playlist, Serializable {
     @Override
     public void clear() {
         this.list = new LinkedList<>();
+    }
+    
+    private void checkSongPresence(final Song song) {
+        if (!this.list.contains(song)) {
+            throw new IllegalArgumentException("Song not found");
+        }
     }
 }

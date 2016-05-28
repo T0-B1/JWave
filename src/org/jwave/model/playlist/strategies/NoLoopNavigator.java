@@ -4,10 +4,11 @@ package org.jwave.model.playlist.strategies;
  * A NoLoop navigator follows the NO_LOOP {@link}PlayMode policy.
  *
  */
-public class NoLoopNavigator extends PlaylistNavigatorImpl {
+public class NoLoopNavigator extends AbstractPlaylistNavigator {
 
     /**
      * Creates a new NoLoop Navigator.
+     * 
      * @param initDimension
      *          initial playlist dimension.
      *          
@@ -19,20 +20,18 @@ public class NoLoopNavigator extends PlaylistNavigatorImpl {
     }
 
     @Override
-    public synchronized int next() {
+    public int next() {
         if (this.getCurrentIndex() < (this.getPlaylistDimension() - 1)) {
             this.incIndex();
         }
-//        System.out.println("Current index: " + this.getCurrentIndex());
         return this.getCurrentIndex();
     }
 
     @Override
-    public synchronized int prev() {
+    public int prev() {
         if (this.getCurrentIndex() > 0) {
             this.decIndex();
         }
-//        System.out.println("Current index: " + this.getCurrentIndex());
         return this.getCurrentIndex();
     }
 }

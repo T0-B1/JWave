@@ -17,10 +17,12 @@ public class DynamicPlayerImpl implements DynamicPlayer {
 
     private static final int BUFFER_SIZE = 1024;
     private static final int OUT_BIT_DEPTH = 16;
+    private static final int LOWER_VOLUME_BOUND = -60;
+    private static final int UPPER_VOLUME_BOUND = 20;
     
-    private Minim minim; 
+    private final Minim minim; 
     private FilePlayer player;
-    private Gain volumeControl;
+    private final Gain volumeControl;
     private AudioOutput out;
     private boolean started;
     private boolean paused;
@@ -39,7 +41,8 @@ public class DynamicPlayerImpl implements DynamicPlayer {
     
     
     @Override
-    public void play() {
+    public void play() throws IllegalStateException {
+        this.checkPlayerLoaded();
         this.player.play();
         if (this.isPaused()) {
             this.setPaused(false);
@@ -50,22 +53,22 @@ public class DynamicPlayerImpl implements DynamicPlayer {
     }
 
     @Override
-    public void pause() {
+    public void pause() throws IllegalStateException {
+        this.checkPlayerLoaded();
         this.setPaused(true);
         this.player.pause();
     }
 
     @Override
     public void stop() {
+        this.checkPlayerLoaded();
         this.pause();
         this.player.rewind();
     }
 
     @Override
     public void cue(final int millis) {
-        if (millis > this.getLength()) {
-            throw new IllegalArgumentException("Out of song length");
-        }
+        this.checkPlayerLoaded();
         this.setPaused(true);
         this.player.cue(millis);
         this.setPaused(false);
@@ -73,44 +76,21 @@ public class DynamicPlayerImpl implements DynamicPlayer {
 
     @Override
     public int getLength() {
+        this.checkPlayerLoaded();
         return this.player.length();
     }
 
     @Override
     public int getPosition() {
-        return this.player.position();
+       this.checkPlayerLoaded();
+       return this.player.position();
     }
 
     @Override
-    public void setVolume(final int amount) {
-        //TODO add limit to the amount value
-        this.volumeControl.setValue(amount);
+    public Optional<Song> getLoaded() {
+        return this.loaded;
     }
 
-    @Override
-    public synchronized void setPlayer(final Song song) {
-        AudioPlayer sampleRateRetriever = minim.loadFile(song.getAbsolutePath());
-        if (this.player != null) {
-            this.stop();
-            this.player.unpatch(this.volumeControl);
-            this.volumeControl.unpatch(this.out);
-            this.out.close();
-        }
-        this.started = false;
-        this.player = new FilePlayer(this.minim.loadFileStream(song.getAbsolutePath(), BUFFER_SIZE, false));
-        this.player.pause();
-        
-        this.out = this.minim.getLineOut(Minim.STEREO, BUFFER_SIZE, sampleRateRetriever.sampleRate(), OUT_BIT_DEPTH);
-        this.player.patch(this.volumeControl);
-        this.volumeControl.patch(this.out);
-        sampleRateRetriever.close();
-        this.loaded = Optional.of(song);
-    }
-    
-    private void setPaused(final boolean value) {
-        this.paused = value;
-    }
-    
     @Override
     public boolean isPlaying() {
         return this.player.isPlaying();
@@ -125,9 +105,46 @@ public class DynamicPlayerImpl implements DynamicPlayer {
     public boolean hasStarted() {
         return this.started;
     }
+
+    @Override
+    public void setVolume(final int amount) {
+        if (amount < LOWER_VOLUME_BOUND || amount > UPPER_VOLUME_BOUND) {
+            throw new IllegalArgumentException("Value not allowed");
+        }
+        this.volumeControl.setValue(amount);
+    }
     
     @Override
-    public Optional<Song> getLoaded() {
-        return this.loaded;
+    public void setPlayer(final Song song) {
+        final AudioPlayer sampleRateRetriever = minim.loadFile(song.getAbsolutePath());
+        if (this.player != null) {
+            this.stop();
+            this.player.unpatch(this.volumeControl);
+            this.volumeControl.unpatch(this.out);
+            this.out.close();
+        }
+        this.started = false;
+        this.player = new FilePlayer(this.minim.loadFileStream(song.getAbsolutePath(), BUFFER_SIZE, false));
+        this.player.pause();
+        
+        this.out = this.createAudioOut(sampleRateRetriever.sampleRate());
+        this.player.patch(this.volumeControl);
+        this.volumeControl.patch(this.out);
+        sampleRateRetriever.close();
+        this.loaded = Optional.of(song);
+    }
+    
+    private void setPaused(final boolean value) {
+        this.paused = value;
+    }
+    
+    private AudioOutput createAudioOut(final float sampleRate) {
+        return this.minim.getLineOut(Minim.STEREO, BUFFER_SIZE, sampleRate, OUT_BIT_DEPTH);
+    }
+    
+    private void checkPlayerLoaded() {
+        if (this.player == null) {
+            throw new IllegalStateException("No song has been loaded");
+        }
     }
 }

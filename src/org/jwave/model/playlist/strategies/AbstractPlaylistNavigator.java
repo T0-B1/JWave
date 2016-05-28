@@ -1,14 +1,12 @@
 package org.jwave.model.playlist.strategies;
 
-import java.util.Optional;
-
 import org.jwave.model.ESource;
 
 /**
  * This is an implementation of {@link}PlaylistNavigator.
  *
  */
-public abstract class PlaylistNavigatorImpl implements PlaylistNavigator {
+public abstract class AbstractPlaylistNavigator implements PlaylistNavigator {
 
     private int playlistDimension;
     private Integer currentIndex;
@@ -22,29 +20,9 @@ public abstract class PlaylistNavigatorImpl implements PlaylistNavigator {
      * @param initCurrentIndex
      *          the current song index.
      */
-    public PlaylistNavigatorImpl(final int initDimension, final int initCurrentIndex) {
+    public AbstractPlaylistNavigator(final int initDimension, final int initCurrentIndex) {
         this.playlistDimension = initDimension;
         this.currentIndex = initCurrentIndex;
-    }
-    
-    /**
-     * Creates a new PlaylistNavigatorImpl.
-     * 
-     * @param initDimension
-     *          initial playlist dimension.
-     *          
-     */
-    public PlaylistNavigatorImpl(final int initDimension) {
-        this(initDimension, 0);
-    }
-    
-    /**
-     * Creates a new PlaylistNavigatorImpl.
-     * 
-     *          
-     */
-    public PlaylistNavigatorImpl() {
-        this(0, 0);
     }
     
     /**
@@ -98,22 +76,8 @@ public abstract class PlaylistNavigatorImpl implements PlaylistNavigator {
     }
     
     @Override
-    public void update(final ESource<? extends Optional<Integer>, ? extends Optional<Integer>> s, 
-            final Optional<Integer> arg1, final Optional<Integer> arg2) {
-        if (arg1.isPresent()) {
-            this.setPlaylistDimension(arg1.get());
-        }
-        if (arg2.isPresent()) {
-            throw new IllegalArgumentException();
-        }
-    }
-    
-    @Override
-    public void update(final ESource<? extends Optional<Integer>, ? extends Optional<Integer>> s, 
-            final Optional<Integer> arg) {
-        if (arg.isPresent()) {
-            this.setPlaylistDimension(arg.get());
-        }
+    public void update(final ESource<? extends Integer> s, final Integer arg) {
+        this.setPlaylistDimension(arg);
     }
     
     @Override

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.UnsupportedTagException;
@@ -17,9 +19,9 @@ public class SongImpl implements Song, Serializable {
      * 
      */
     private static final long serialVersionUID = 9045721077357297256L;
-    private File decorated;
-//    private MetaDataV1 metaData;
-    private MetaDataV2 metaData2;
+    
+    private final File decorated;
+    private final transient MetaDataRetriever metaData;
     
     /**
      * Creates a new song object.
@@ -36,10 +38,9 @@ public class SongImpl implements Song, Serializable {
      * @throws UnsupportedTagException 
      */
     public SongImpl(final File audioFile) {
-        this.decorated = audioFile;     
-//        this.metaData = new MetaDataImpl(this.decorated.getAbsolutePath());
-        this.metaData2 = new MetaDataV2Impl(this.decorated.getAbsolutePath());
-        
+        this.decorated = audioFile;   
+        final Path pathForMetaData = Paths.get(this.decorated.getAbsolutePath());
+        this.metaData = new MetaDataRetrieverImpl(pathForMetaData);  
     }
     
     @Override
@@ -52,19 +53,8 @@ public class SongImpl implements Song, Serializable {
         return this.decorated.getAbsolutePath();
     }
 
-//    @Override
-//    public MetaDataV1 getMetaData() {
-//        return this.metaData;
-//    }
-
     @Override
-    public MetaDataV2 getMetaDataV2() {
-        return this.metaData2;
+    public MetaDataRetriever getMetaData() {
+        return this.metaData;
     }
-    
-//    private void setMetaData() {
-//        if (!this.decorated.getName().endsWith(".mp3")) {
-//            throw
-//        }
-//    }
 }

@@ -1,18 +1,11 @@
 package org.jwave.model.player;
 
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import java.util.Optional;
-
-import com.mpatric.mp3agic.InvalidDataException;
-import com.mpatric.mp3agic.UnsupportedTagException;
 
 /**
- * Interface that models the concept of playlist manager.
- * A playlist manager saves and loads playlists from the file system and contains the strategy
- * for navigate them.
+ * Interface that models the concept of playlist manager. A playlist manager manages playlists and contains the 
+ * strategy for navigating them.
  */
 public interface PlaylistManager {
     
@@ -21,14 +14,6 @@ public interface PlaylistManager {
      * 
      * @param audioFile
      *          the audioFile to be loaded.
-     * @throws IOException 
-     * @throws SecurityException 
-     * @throws NoSuchMethodException 
-     * @throws InvocationTargetException 
-     * @throws IllegalArgumentException 
-     * @throws IllegalAccessException 
-     * @throws InvalidDataException 
-     * @throws UnsupportedTagException 
      */
     void addAudioFile(File audioFile);
     
@@ -65,12 +50,6 @@ public interface PlaylistManager {
      *          the previous song in the playing queue.
      */
     Song prev();
-    
-    /**
-     * Resets the playlist manager so the default playlist will be cleaned and it will become 
-     * the current playing queue.
-     */
-    void reset();
 
     /**
      * Selects a playlist from the collection of available playlists.
@@ -94,19 +73,10 @@ public interface PlaylistManager {
     void renamePlaylist(Playlist playlist, String newName);
     
     /**
-     * Sets the available playlists.
-     * 
-     * @param playlists
-     *          the available playlists.
+     * Resets the playlist manager so the default playlist will be cleaned and it will become 
+     * the current playing queue.
      */
-    void setAvailablePlaylists(Collection<? extends Playlist> playlists);
-    
-    /**
-     * 
-     * @return
-     *          the index of the song loaded in the connected {@link}DynamicPlayer.
-     */
-    Optional<Integer> getCurrentLoadedIndex();
+    void reset();
     
     /**
      * 
@@ -118,9 +88,9 @@ public interface PlaylistManager {
     /**
      * 
      * @return
-     *          the default playing queue.
+     *          the default playilist.
      */
-    Playlist getDefaultQueue();
+    Playlist getDefaultPlaylist();
     
     /**
      * 
@@ -134,6 +104,14 @@ public interface PlaylistManager {
      *          the current play mode (default is {@link Playmode.NO_LOOP})
      */
     PlayMode getPlayMode();
+    
+    /**
+     * Sets the available playlists.
+     * 
+     * @param playlists
+     *          the available playlists.
+     */
+    void setAvailablePlaylists(Collection<? extends Playlist> playlists);
     
     /**
      * 

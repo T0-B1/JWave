@@ -11,7 +11,7 @@ import com.mpatric.mp3agic.NotSupportedException;
  * This interface models metadata in a more detailed way, letting user to set them.
  *
  */
-public interface MetaDataV2 {
+public interface MetaDataRetriever {
     
     /**
      * 
@@ -48,9 +48,10 @@ public interface MetaDataV2 {
     InvocationTargetException, NoSuchMethodException, SecurityException;
     
     /**
-     * This method write effectively the new metaData into the file.
+     * This method effectively writes the new metaData into the file.
+     * 
      * @throws IOException 
      * @throws NotSupportedException 
      */
-    void overWriteOriginalFile() throws NotSupportedException, IOException; 
+    void writeMetaDataToFile() throws NotSupportedException, IOException; 
 }

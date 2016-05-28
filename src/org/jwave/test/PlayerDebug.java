@@ -1,20 +1,18 @@
 package org.jwave.test;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
 
-import javax.sound.sampled.AudioSystem;
-
-import org.jwave.controller.player.Controller;
-import org.jwave.controller.player.PlaylistNotFoundException;
+import org.jwave.controller.player.PlaylistController;
 import org.jwave.model.player.DynamicPlayer;
+import org.jwave.model.player.DynamicPlayerImpl;
 import org.jwave.model.player.MetaData;
 import org.jwave.model.player.PlayMode;
 import org.jwave.model.player.Playlist;
 import org.jwave.model.player.PlaylistManager;
+import org.jwave.model.player.PlaylistManagerImpl;
 
 /**
  * Class used for testing player functionalities from console. 
@@ -29,12 +27,14 @@ public final class PlayerDebug {
      * 
      * @param args
      *          arguments.
+     * @throws IOException 
+     * @throws ClassNotFoundException 
+     * @throws IllegalArgumentException 
      */
     
-    public static void main(final String... args) {
-        final Controller c = new Controller();
-        final DynamicPlayer player = c.getDynamicPlayer();
-        final PlaylistManager manager = c.getPlaylistManager();
+    public static void main(final String... args) throws IllegalArgumentException, ClassNotFoundException, IOException {
+        final DynamicPlayer player = new DynamicPlayerImpl();
+        PlaylistManager manager = new PlaylistManagerImpl(PlaylistController.loadDefaultPlaylist());
         final Scanner in = new Scanner(System.in);
         in.useDelimiter("\n");
         int command = 0;
@@ -85,7 +85,7 @@ public final class PlayerDebug {
                 System.out.println("position = " + player.getPosition());
                 break;
             case 7:
-                System.out.println("current PlayMode = " + manager.getPlayMode());                
+                System.out.println("current PlayMode = " + manager.getPlayMode().toString());                
                 break;
             case 8:
                 System.out.println("Enter new PlayMode");       //TODO complete option
@@ -123,7 +123,11 @@ public final class PlayerDebug {
                 }
             case 14:
                 System.out.println("Refreshing available playlists");
-                c.reloadAvailableCache();
+                try {
+                    manager.setAvailablePlaylists(PlaylistController.reloadAvailablePlaylists());
+                } catch (IllegalArgumentException | ClassNotFoundException | IOException e) {
+                   System.err.println("Problem encountered while loading playlists.");
+                }
                 break;
             case 15:
                 System.out.println("Does nothing");
@@ -146,14 +150,14 @@ public final class PlayerDebug {
                 System.out.println("Current loaded :" + player.getLoaded().get().getName());
                 break;
             case 19:
-                System.out.println("Current loaded index = " + manager.getCurrentLoadedIndex().get());
+                System.out.println("Not available");
                 break;
             case 20:
                 manager.getPlayingQueue().printPlaylist();
                 break;
             case 21:
                 System.out.println("Enter a name to select a playlist from the available ");
-                manager.getDefaultQueue().printPlaylist();
+                manager.getDefaultPlaylist().printPlaylist();
                 name = in.next();
                 Playlist p;
                 p = manager.selectPlaylist(name);
@@ -164,7 +168,7 @@ public final class PlayerDebug {
             case 22:
                 System.out.println("Enter the value of mnetadata you want to retrieve");
                 name = in.next();
-                System.out.println(player.getLoaded().get().getMetaDataV2().retrieve(MetaData.valueOf(name)));
+                System.out.println(player.getLoaded().get().getMetaData().retrieve(MetaData.valueOf(name)));
                 break;
             default:
                 System.out.println("No known command selected");
