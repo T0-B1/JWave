@@ -2,6 +2,7 @@ package org.jwave.model.player;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * Interface that models the concept of playlist manager. A playlist manager manages playlists and contains the 
@@ -34,22 +35,45 @@ public interface PlaylistManager {
      * 
      * @param playlist
      *          the playlist to be deleted.
+     *                    
      */
     void deletePlaylist(Playlist playlist);
+    
+    /**
+     * Selects a song from the current playing queue, making it the current selected.
+     * 
+     * @param name
+     *          the name of the song to be loaded.
+     *          
+     * @return
+     *          the selected song.
+     */
+    Song selectSongFromPlayingQueue(String name);
+    
+    /**
+     * Selects a song from the current playing queue, making it the current selected.
+     * 
+     * @param index
+     *          the index of the song to be loaded.
+     *          
+     * @return
+     *          the selected song.
+     */
+    Song selectSongFromPlayingQueue(int index);
     
     /**
      * 
      * @return
      *          the next song in the playing queue.
      */
-    Song next();
+    Optional<Song> next();
     
     /**
      * 
      * @return
      *          the previous song in the playing queue.
      */
-    Song prev();
+    Optional<Song> prev();
 
     /**
      * Selects a playlist from the collection of available playlists.
@@ -69,8 +93,11 @@ public interface PlaylistManager {
      *
      * @param newName
      *          the new name to be assigned to the playlist.          
+     *          
+     * @throws IllegalArgumentException
+     *          if there is already a playlist with the same name.         
      */
-    void renamePlaylist(Playlist playlist, String newName);
+    void renamePlaylist(Playlist playlist, String newName) throws IllegalArgumentException;
     
     /**
      * Resets the playlist manager so the default playlist will be cleaned and it will become 
