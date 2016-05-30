@@ -28,7 +28,7 @@ public interface PlaylistManager {
      * @return 
      *          the playlist created
      *          
-     * @pthrows IllegalArgumentException
+     * @throws IllegalArgumentException
      *          when inserting a name that is already present in the avalable playlists.         
      * 
      */
@@ -59,6 +59,18 @@ public interface PlaylistManager {
     
     /**
      * 
+     * @param index
+     *          the song index.
+     * @return
+     *          the selecteed song
+     *          
+     * @throws IllegalArgumentException
+     *          when passing an out of border index.
+     */
+    Song selectSongFromPlayingQueueAtIndex(int index) throws IllegalArgumentException;
+    
+    /**
+     * 
      * @return
      *          the next song in the playing queue.
      */
@@ -74,12 +86,12 @@ public interface PlaylistManager {
     /**
      * Selects a playlist from the collection of available playlists.
      * 
-     * @param name
+     * @param playlistID
      *          the name of the playlist to be selected.
      * @return
      *          the selected playlist.
      */
-    Playlist selectPlaylist(String name);
+    Playlist selectPlaylist(UUID playlistID);
     
     /**
      * Renames the selected playlist.

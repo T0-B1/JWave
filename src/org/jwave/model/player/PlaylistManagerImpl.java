@@ -37,7 +37,7 @@ public class PlaylistManagerImpl implements PlaylistManager {
         this.currentIndex = Optional.empty();
         this.defaultQueue = newDefaultQueue;
         this.loadedPlaylist = this.defaultQueue;
-        this.playMode = PlayMode.SHUFFLE;
+        this.playMode = PlayMode.NO_LOOP;
         this.navigator = this.navFactory.createNavigator(this.playMode, this.loadedPlaylist.getDimension(), Optional.empty());
         this.loadedPlaylist.addEObserver(this.navigator);
     }
@@ -60,9 +60,6 @@ public class PlaylistManagerImpl implements PlaylistManager {
 
     @Override
     public void deletePlaylist(final Playlist playlist) {
-//        if (!this.availablePlaylists.contains(playlist)) {
-//            throw new IllegalArgumentException("Playlist not found");
-//        }
         this.availablePlaylists.remove(playlist);
     }
     
@@ -91,9 +88,9 @@ public class PlaylistManagerImpl implements PlaylistManager {
     }
     
     @Override
-    public Playlist selectPlaylist(final String name) {
+    public Playlist selectPlaylist(final UUID playlistID) {
         return this.availablePlaylists.stream()
-                .filter(p -> p.getName().equals(name))
+                .filter(p -> p.getName().equals(playlistID))
                 .findAny()
                 .get();
     }
@@ -170,7 +167,16 @@ public class PlaylistManagerImpl implements PlaylistManager {
 
     @Override
     public Song selectSongFromPlayingQueue(final UUID songID) throws IllegalArgumentException {
-        return this.defaultQueue.getSong(songID);
+        final Song out = this.defaultQueue.getSong(songID);
+        this.navigator.setCurrentIndex(Optional.of(this.loadedPlaylist.indexOf(songID)));
+        return out;
+    }
+
+    @Override
+    public Song selectSongFromPlayingQueueAtIndex(final int index) throws IllegalArgumentException {
+        final Song out = this.defaultQueue.getSongAtIndex(index);
+        this.navigator.setCurrentIndex(Optional.of(index));
+        return out;
     }
 
     

@@ -32,5 +32,7 @@ public interface PlayerUIObserver {
     public void addSongToPlaylist(Song song, Playlist playlist);
     
     public ObservableList<Playlist> getObservablePlaylists();
+    
+    public ObservableList<Song> getObservablePlaylistContent(Playlist playlist);
 
 }

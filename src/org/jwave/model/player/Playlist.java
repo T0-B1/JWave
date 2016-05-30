@@ -45,14 +45,17 @@ public interface Playlist extends ESource<Integer> {
      */
     void removeFromPlaylist(UUID songID) throws IllegalArgumentException;
     
-//    /**
-//     * 
-//     * @param song
-//     *          the song contained in the playlist.
-//     * @return
-//     *          the index of a song in the playlist.
-//     */
-//    int indexOf(Song song);
+    /**
+     * 
+     * @param songID
+     *          the id of the song contained in the playlist.
+     * @return
+     *          the index of a song in the playlist.
+     *          
+     * @throws IllegalArgumentException
+     *          when the playlist doesn't contain the song id.         
+     */
+    int indexOf(UUID songID) throws IllegalArgumentException;
     
     /**
      * 
@@ -70,7 +73,9 @@ public interface Playlist extends ESource<Integer> {
      * @return
      *          the selected song.
      *          
-     *          
+     * @throws IllegalArgumentException
+     *          when the playilist doesn't contain the songID.   
+     *                  
      */
     Song getSong(UUID songID) throws IllegalArgumentException;  
     
