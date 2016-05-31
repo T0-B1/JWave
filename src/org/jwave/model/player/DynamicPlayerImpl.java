@@ -17,8 +17,9 @@ public class DynamicPlayerImpl implements DynamicPlayer {
 
     private static final int BUFFER_SIZE = 1024;
     private static final int OUT_BIT_DEPTH = 16;
-    private static final int LOWER_VOLUME_BOUND = -60;
-    private static final int UPPER_VOLUME_BOUND = 20;
+    private static final float LOWER_VOLUME_BOUND = 0f;
+    private static final float UPPER_VOLUME_BOUND = 70.0f;
+    private static final float NORMALIZER = 60f;
     
     private final Minim minim; 
     private FilePlayer player;
@@ -112,11 +113,11 @@ public class DynamicPlayerImpl implements DynamicPlayer {
     }
 
     @Override
-    public void setVolume(final int amount) {
+    public void setVolume(final float amount) throws IllegalArgumentException {
         if (amount < LOWER_VOLUME_BOUND || amount > UPPER_VOLUME_BOUND) {
             throw new IllegalArgumentException("Value not allowed");
         }
-        this.volumeControl.setValue(amount);
+        this.volumeControl.setValue(amount - NORMALIZER);
     }
     
     @Override
