@@ -144,8 +144,12 @@ public class DynamicPlayerImpl implements DynamicPlayer {
         this.paused = value;
     }
     
-    @Override
-    public void clearPlayer() {
+    /**
+     * Clear the player.
+     * @return
+     *  true if the operation succeded.
+     */
+    private boolean clearPlayer() {
         if (this.player != null) {
             this.stop();
             this.player.unpatch(this.volumeControl);
@@ -153,13 +157,16 @@ public class DynamicPlayerImpl implements DynamicPlayer {
             this.out.close();
             this.player.close();
             this.started = false;
+            return true;
         }
+        return false;
     }
 
     @Override
     public void releasePlayerResources() {
-        this.clearPlayer();
-        this.minim.stop();
+        if (this.clearPlayer()) {
+            this.minim.stop();
+        }
     }  
     
     private AudioOutput createAudioOut(final float sampleRate) {
@@ -175,5 +182,11 @@ public class DynamicPlayerImpl implements DynamicPlayer {
     @Override
     public boolean isEmpty() {
         return this.player == null;
+    }
+
+
+    @Override
+    public void resetPlayer() {
+        this.clearPlayer();
     }
 }

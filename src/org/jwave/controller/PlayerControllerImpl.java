@@ -45,7 +45,13 @@ public final class PlayerControllerImpl implements PlayerController {
 
         this.player = new DynamicPlayerImpl();
         this.editorPlayer = new DynamicEditorPlayerImpl(new DynamicPlayerImpl());
-        this.manager = new PlaylistManagerImpl(PlaylistController.loadDefaultPlaylist());
+        final Playlist def = PlaylistController.loadDefaultPlaylist();
+        this.manager = new PlaylistManagerImpl(def);
+        try {
+            PlaylistController.saveDefaultPlaylistToFile(def, def.getName());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         this.agent = new ClockAgent(player, manager, ClockAgent.Mode.PLAYER);
         this.agent.addController(this);
         this.agent.startClockAgent();
@@ -77,7 +83,7 @@ public final class PlayerControllerImpl implements PlayerController {
     }
 
     @Override
-    public void loadSong(final File song) throws Exception {
+    public void loadSong(final File song) throws IllegalArgumentException, IOException{
         Song newSong = this.manager.addAudioFile(song);
 
         // In case of first opening, there are no other songs, the song is
@@ -90,7 +96,8 @@ public final class PlayerControllerImpl implements PlayerController {
 
         this.songs.get(manager.getDefaultPlaylist()).add(newSong);
 
-        PlaylistController.savePlaylistToFile(manager.getDefaultPlaylist(),manager.getDefaultPlaylist().getName());
+        PlaylistController.saveDefaultPlaylistToFile(manager.getDefaultPlaylist(),manager.getDefaultPlaylist().getName());
+        //PlaylistController.savePlaylistToFile(manager.getDefaultPlaylist(),manager.getDefaultPlaylist().getName());
         // manager.getDefaultPlaylist().getName());
     }
 
@@ -155,6 +162,11 @@ public final class PlayerControllerImpl implements PlayerController {
     @Override
     public void addSongToPlaylist(Song song, Playlist playlist) {
         playlist.addSong(song);
+        try {
+            PlaylistController.savePlaylistToFile(playlist, playlist.getName());
+        } catch (IOException e) {
+            System.out.println("AHIA");
+        }
         songs.get(playlist).add(song);
     }
 

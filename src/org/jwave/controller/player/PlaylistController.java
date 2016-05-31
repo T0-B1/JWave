@@ -90,7 +90,7 @@ public final class PlaylistController {
             return Collections.emptySet();
         }
         for (Path file : stream) {
-            if (Files.exists(file) && Files.isRegularFile(file) && file.getFileName().toString().endsWith(".jwo")) {
+            if (Files.exists(file) && Files.isRegularFile(file) && file.getFileName().toString().endsWith(DEF_EXTENSION)) {
                 try {
                     out.add(loadPlaylist(file.toFile()));
                 } catch (ClassNotFoundException | IOException e) { }
@@ -103,6 +103,8 @@ public final class PlaylistController {
         try (final ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(
                 new FileInputStream(playlist)))) {
             final Playlist extractedPlaylist = (Playlist) ois.readObject();
+            extractedPlaylist.clearObservers();
+            extractedPlaylist.refreshContent();
             return extractedPlaylist;
         }
     }
@@ -142,29 +144,19 @@ public final class PlaylistController {
      * 
      * @return
      *          the default playlist.
+     *          
      * @throws IOException 
      * @throws ClassNotFoundException 
      * @throws IllegalArgumentException 
      */
     public static Playlist loadDefaultPlaylist() {
-        final Path defaultDir = getDefaultSavePath();
-        DirectoryStream<Path> stream;
+        final Path defPath = Paths.get(getDefaultSavePath().toString(), System.getProperty(SEPARATOR), DEF_PLAYLIST_NAME);
         try {
-            stream = Files.newDirectoryStream(defaultDir);
-            for (Path file : stream) {
-                if (Files.exists(file) && Files.isDirectory(file) && file.getFileName().toString().equals(DEF_PLAYLIST_NAME)) {
-                    return loadPlaylist(file.toFile());   
-                }
-             }
-            final Playlist defaultOut = new PlaylistImpl(DEF_PLAYLIST_NAME);
-            try (final ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(
-                    new FileOutputStream(new File(System.getProperty(HOME) + System.getProperty(SEPARATOR) + SAVE_DIR_NAME 
-                            + System.getProperty(SEPARATOR) + DEF_PLAYLIST_NAME))))) {
-                oos.writeObject(defaultOut);
-                return defaultOut; 
-            }
-        } catch (IOException | IllegalArgumentException | ClassNotFoundException e) {
-            return new PlaylistImpl(DEF_PLAYLIST_NAME);
+            final Playlist out = loadPlaylist(defPath.toFile());
+            return out;
+        } catch (ClassNotFoundException | IOException e) {
+            Playlist def = new PlaylistImpl(DEF_PLAYLIST_NAME);
+            return def;
         }
     }
     

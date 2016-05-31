@@ -2,6 +2,7 @@ package org.jwave.model.player;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public interface PlaylistManager {
      * @return
      *          the added song.         
      */
-    Song addAudioFile(File audioFile) throws Exception;
+    Song addAudioFile(File audioFile) throws IllegalArgumentException;
     
     /**
      * Creates a new playlist and adds it to the collection of available playlists.
@@ -43,11 +44,11 @@ public interface PlaylistManager {
     /**
      * Deletes a playlist.
      * 
-     * @param playlist
+     * @param playlistID
      *          the playlist to be deleted.
      *                    
      */
-    void deletePlaylist(Playlist playlist);
+    void deletePlaylist(UUID playlistID);
     
     /**
      * Selects a song from the current playing queue, making it the current selected.
@@ -58,10 +59,10 @@ public interface PlaylistManager {
      * @return
      *  the selected song.
      *  
-     *  @throws IllegalArgumentException
+     *  @throws NoSuchElementException
      *          when the playing queue doesn't contain the songID.               
      */
-    Song selectSongFromPlayingQueue(UUID songID) throws IllegalArgumentException;
+    Song selectSongFromPlayingQueue(UUID songID) throws NoSuchElementException;
     
     /**
      * 

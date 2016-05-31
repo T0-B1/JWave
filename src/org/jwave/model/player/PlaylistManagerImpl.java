@@ -4,16 +4,13 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import org.jwave.controller.player.FileSystemHandler;
 import org.jwave.model.playlist.strategies.PlaylistNavigator;
 import org.jwave.model.playlist.strategies.PlaylistNavigatorFactory;
-
-import ddf.minim.AudioPlayer;
-import ddf.minim.Minim;
 
 /**
  * This is an implementation of {@link PlaylistManager}.
@@ -39,20 +36,22 @@ public class PlaylistManagerImpl implements PlaylistManager {
         this.defaultQueue = newDefaultQueue;
         this.availablePlaylists = new HashSet<>();
         this.currentIndex = Optional.empty();
-        this.loadedPlaylist = this.defaultQueue;
+        this.loadedPlaylist = newDefaultQueue;
         this.playMode = PlayMode.NO_LOOP;
-        this.navigator = this.navFactory.createNavigator(this.playMode, this.loadedPlaylist.getDimension(), Optional.empty());
+        this.navigator = this.navFactory.createNavigator(this.playMode, 
+                this.loadedPlaylist.getDimension(), Optional.empty());
+        System.out.println("name " + this.loadedPlaylist.getName());
         this.loadedPlaylist.addEObserver(this.navigator);
     }
 
     @Override
-    public Song addAudioFile(final File audioFile) throws Exception {
+    public Song addAudioFile(final File audioFile) throws IllegalArgumentException {
         final Song out = new SongImpl(audioFile);
         final DynamicPlayer tester = new DynamicPlayerImpl();
         try {
             tester.setPlayer(out);
-        } catch(Exception e) {
-            throw e;
+        } catch (Exception e) {
+            throw new IllegalArgumentException();
         } finally {
             tester.releasePlayerResources();
         }
@@ -72,8 +71,12 @@ public class PlaylistManagerImpl implements PlaylistManager {
 
 
     @Override
-    public void deletePlaylist(final Playlist playlist) {
-        this.availablePlaylists.remove(playlist);
+    public void deletePlaylist(final UUID playlistID) {
+        this.availablePlaylists.forEach(p -> {
+            if (p.getPlaylistID().equals(playlistID)) {
+                this.availablePlaylists.remove(p);
+            }
+        });
     }
     
     @Override
@@ -101,7 +104,7 @@ public class PlaylistManagerImpl implements PlaylistManager {
     }
     
     @Override
-    public Playlist selectPlaylist(final UUID playlistID) {
+    public Playlist selectPlaylist(final UUID playlistID) throws NoSuchElementException {
         return this.availablePlaylists.stream()
                 .filter(p -> p.getName().equals(playlistID))
                 .findAny()
