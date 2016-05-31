@@ -81,7 +81,8 @@ public class ClockAgent implements Runnable {
         default:
             this.checkPlayer();
         }
-        this.notifyControllers();
+        if(dynPlayer.isPlaying())
+            this.notifyControllers();
     }
     
     /**
