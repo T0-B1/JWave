@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -25,10 +24,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.control.TableRow;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ContextMenu;
@@ -38,6 +34,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
@@ -96,6 +93,19 @@ public class PlayerScreenController implements UI {
         btnNext.setText("");
         btnPrev.setText("");
         
+        
+        InputStream is;
+        try {
+            is = new BufferedInputStream(new FileInputStream(System.getProperty("user.dir") + System.getProperty("file.separator") + "res" 
+                    + System.getProperty("file.separator") + "icons" + System.getProperty("file.separator") + "next.png"));
+            Image img = new Image(is);
+            btnNext.setGraphic(new ImageView(img));
+        } catch (FileNotFoundException e1) {
+           
+            e1.printStackTrace();
+        }
+        
+
         // Sets the choices for the reproduction modes
         choiceMode.getItems().add("Shuffle");
         choiceMode.getItems().add("Straight");
